@@ -12,11 +12,12 @@ libraryDependencies ++= Seq(
   "org.scala-lang" % "scala-compiler" % scalaV,
   "org.typelevel" %% "cats" % "0.7.0",
   "io.monix" %% "monix" % "2.0.0",
-  "io.monix" %% "monix-cats" % "2.0.0"
+  "io.monix" %% "monix-cats" % "2.0.0",
+  "org.scalacheck" %% "scalacheck" % "1.12.5"
 )
 
 scalacOptions in (Compile, console) ++= Seq(
-  "-i", "myrepl.init"
+  "-i", "myrepl.sc"
 )
 
 tutSettings
