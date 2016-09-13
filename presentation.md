@@ -1,16 +1,13 @@
 autoscale: true
 build-lists: true
 slidenumbers: true
+footer: @raulraja @47deg
 ---
+![original](background.jpg)
 
-# Run Wild, Run Free! #
+# [fit] Run Wild, Run Free! #
 
-
-(A team's journey over Scala's FP emerging patterns)
-
-~
-
-@raulraja @47deg
+## [fit] A team's journey over Scala's FP emerging patterns ##
 
 ---
 
@@ -362,8 +359,7 @@ At this point it's a game of choosing your own adventure:
 
 # Error handling #
 
-`OptionT`, `EitherT`, `Validated` some of the reasons folks get
-interested in FP in Scala.
+`OptionT`, `EitherT`, `Validated` some of the reasons folks get interested in FP in Scala.
 
 ---
 
@@ -393,8 +389,7 @@ val nonExistingUser = fetchUserInfo(nonExistingUserId).await
 
 # Error handling #
 
-As they digg more in FP land they learn about
-the importance of ADTs and sealed hierarchies!
+As they dig deeper in FP land they learn about the importance of ADTs and sealed hierarchies!
 
 ```scala
 sealed abstract class AppException(msg : String) extends Product with Serializable
@@ -458,6 +453,8 @@ val nonExistingUser = fetchUserInfo(nonExistingUserId).await
 
 # Non determinism #
 
+Common mistakes when refactoring
+
 ```scala
 import org.scalacheck._
 import org.scalacheck.Prop.{forAll, BooleanOperators}
@@ -475,6 +472,8 @@ def latencyGen: Gen[(Int, Int)] = for {
 
 # Non determinism #
 
+Effects are sequentially performed
+
 ```scala
 val test = forAll(latencyGen) { latency =>
     val ops = for {
@@ -489,6 +488,8 @@ val test = forAll(latencyGen) { latency =>
 ---
 
 # Non determinism #
+
+Effects may be executed in the wrong order
 
 ```scala
 val test = forAll(latencyGen) { latency =>
@@ -517,13 +518,13 @@ val test = forAll(latencyGen) { latency =>
 
 # Code reuse? #
 
-Can we make our code available to other runtimes beside `Future`.
+Can we make our code work in the context of other types beside `Future`?
 
 ---
 
 # Abstracting over the return type #
 
-Our services are coupled to `Future`
+As it stands our services are coupled to `Future`.
 
 ```scala
 type Service[A, B] = A => Future[B]
@@ -533,7 +534,7 @@ type Service[A, B] = A => Future[B]
 
 # Abstracting over the return type #
 
-But they don't have to
+But they don't have to.
 
 ```scala
 type Service[F[_], A, B] = A => F[B]
@@ -809,3 +810,14 @@ Recommendations for others that have worked for us:
 https://speakerdeck.com/raulraja/run-wild-run-free
 
 ---
+
+# Acknowledgments #
+
+- [47 Degrees](http://47deg.com)
+- [Background photo](https://unsplash.com/photos/4F42IqLRjf4)
+- [Algebraic Data Types](https://en.wikipedia.org/wiki/Algebraic_data_type)
+- [Cats](https://github.com/typelevel/cats)
+- [Rapture](http://rapture.io/mod/core)
+- [scala.concurrent.Future](http://www.scala-lang.org/api/current/#scala.concurrent.Future)
+- [Your server as a function](https://monkey.org/~marius/funsrv.pdf)
+
