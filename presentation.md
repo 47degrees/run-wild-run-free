@@ -10,11 +10,11 @@ slidenumbers: true
 
 ~
 
-@raulraja CTO @47deg
+@raulraja @47deg
 
 ---
 
-## What is this about? ##
+# What is this about? #
 
 - Code samples illustrating common issues folks run into with Scala.
 
@@ -23,7 +23,7 @@ Compiled since 2013 with about ~10 teams with 5 - 6  devs per team
 
 ---
 
-## What is this about? ##
+# What is this about? #
 
 A code centric report on:
 
@@ -35,14 +35,14 @@ A code centric report on:
 
 ---
 
-## DISCLAIMER: What it's NOT about! ##
+# DISCLAIMER: What it's NOT about! #
 
 - A critique of [your server as a function](https://monkey.org/~marius/funsrv.pdf)
 - A critique to [scala.concurrent.Future] or any other `Future` like impl.
 
 ---
 
-## Your server as a function ##
+# Your server as a function #
 
 ```scala
 import rwrf.utils._
@@ -55,7 +55,7 @@ A lot of current architectures are based on variations of this.
 
 ---
 
-## Let-s build something ##
+# Let's build something #
 
 ```scala
 type UserId = Long
@@ -67,7 +67,7 @@ case class Address(addressId: AddressId)
 
 ---
 
-### Exceptions
+# Exceptions #
 
 Purposely unsealed to resemble most exceptions in the `Throwable` hierarchy
 
@@ -80,32 +80,32 @@ case class HostNotFoundException(msg : String) extends RuntimeException(msg)
 
 ---
 
-### DB backend
+# DB backend #
 
 ```scala
 def fetchRemoteUser(userId: UserId) : User =
-    throw NotFound(s"user not found with id : $userId")
+  throw NotFound(s"user not found with id : $userId")
 
 def fetchRemoteAddress(addressId: AddressId) : Address =
-    throw DuplicateFound(s"address duplicate found")
+  throw DuplicateFound(s"address duplicate found")
 ```
 
 ---
 
-### Services
+# Services #
 
 Here is where people start tripping
 
 ```scala
 val fetchUser: Service[UserId, User] =
-    (userId: UserId) => Future {
-        fetchRemoteUser(userId)
-    }
+  (userId: UserId) => Future {
+    fetchRemoteUser(userId)
+  }
 ```
 
 ---
 
-### Services
+# Services #
 
 Let's try again
 
@@ -113,41 +113,37 @@ Let's try again
 import scala.concurrent.ExecutionContext.Implicits.global
 
 val fetchUser: Service[UserId, User] =
-    (userId: UserId) => Future {
-        fetchRemoteUser(userId)
-    }
+  (userId: UserId) => Future(fetchRemoteUser(userId))
 
 val fetchAddress: Service[AddressId, Address] =
-    (addressId: AddressId) => Future {
-        fetchRemoteAddress(addressId)
-    }
+  (addressId: AddressId) => Future(fetchRemoteAddress(addressId))
 
 val fetchUserInfo: Service[UserId, (User, Address)] =
-    (userId: UserId) =>
-        for {
-          user <- fetchUser(userId)
-          address <- fetchAddress(user.addressId)
-        } yield (user, address)
+  (userId: UserId) =>
+    for {
+      user <- fetchUser(userId)
+      address <- fetchAddress(user.addressId)
+    } yield (user, address)
 ```
 
 ---
 
-### Error handling
+# Error handling #
 
 What if something goes wrong?
 
 ```scala
 val fetchUserInfo: Service[UserId, (User, Address)] =
-    (userId: UserId) =>
-        for {
-          user <- fetchUser(userId) //not found
-          address <- fetchAddress(user.addressId) //duplicate found
-        } yield (user, address)
+  (userId: UserId) =>
+    for {
+      user <- fetchUser(userId) //not found
+      address <- fetchAddress(user.addressId) //duplicate found
+    } yield (user, address)
 ```
 
 ---
 
-### Error handling
+# Error handling #
 
 At this point folks branch out and they either
 
@@ -156,7 +152,7 @@ At this point folks branch out and they either
 
 ---
 
-### Error handling
+# Error handling #
 
 Those who attempt to recover may succeed
 
@@ -168,7 +164,7 @@ val result = fetchUserInfo(1L) recover {
 
 ---
 
-### Error handling
+# Error handling #
 
 But if you don't know the impl details and attempt to recover
 
@@ -180,7 +176,7 @@ val result = fetchAddress(1L) recover {
 
 ---
 
-### Error handling
+# Error handling #
 
 Recovering becomes a game of guess and match
 
@@ -193,7 +189,7 @@ fetchAddress(1L) recover {
 
 ---
 
-### Error handling
+# Error handling #
 
 What starts as a trivial piece of code quickly becomes
 
@@ -211,7 +207,7 @@ fetchAddress(1L) recover {
 
 ---
 
-### Error handling
+# Error handling #
 
 With most `Future#recover` style apps I've seen...
 
@@ -221,7 +217,7 @@ With most `Future#recover` style apps I've seen...
 
 ---
 
-### Error handling
+# Error handling #
 
 Let's mock the DB again
 
@@ -230,84 +226,82 @@ val existingUserId = 1L
 val nonExistingUserId = 2L
 
 def fetchRemoteUser(userId: UserId) : User =
-      if (userId == existingUserId) User(userId, 10L) else null
+  if (userId == existingUserId) User(userId, 10L) else null
 
 def fetchRemoteAddress(addressId: AddressId) : Address =
-	Address(addressId)
+  Address(addressId)
 ```
 
 ---
 
-### Error handling
+# Error handling #
 
 Folks realize they need safeguards
 
 ```scala
 val fetchUser: Service[UserId, Option[User]] =
-    (userId: UserId) => Future(Option(fetchRemoteUser(userId)))
+  (userId: UserId) => Future(Option(fetchRemoteUser(userId)))
 
 val fetchAddress: Service[AddressId, Option[Address]] =
-    (addressId: AddressId) => Future(Option(fetchRemoteAddress(addressId)))
+  (addressId: AddressId) => Future(Option(fetchRemoteAddress(addressId)))
 ```
 
 ---
 
-### Error handling
+# Error handling #
 
 The issue of having a nested type quickly surfaces
 
 ```scala
 val fetchUserInfo: Service[UserId, (User, Address)] =
-    (userId: UserId) =>
-        for {
-            user <- fetchUser(userId)
-            address <- fetchAddress(user.addressId)
-        } yield (user, address)
+  (userId: UserId) =>
+    for {
+      user <- fetchUser(userId)
+      address <- fetchAddress(user.addressId)
+    } yield (user, address)
 ```
 
 ---
 
-### Error handling
+# Error handling #
 
 Most folks wrestle with the for comprehension but end up doing:
 
 ```scala
 val fetchUserInfo: Service[UserId, Option[(User, Address)]] =
-    (userId: UserId) =>
-        fetchUser(userId) flatMap {
-            case Some(user) => fetchAddress(user.addressId) flatMap {
-                case Some(address) => Future.successful(Some((user, address)))
-                case None => Future.successful(None)
-            }
-            case None => Future.successful(None)
-        }
+  (userId: UserId) =>
+    fetchUser(userId) flatMap {
+      case Some(user) => fetchAddress(user.addressId) flatMap {
+        case Some(address) => Future.successful(Some((user, address)))
+        case None => Future.successful(None)
+      }
+      case None => Future.successful(None)
+    }
 ```
 
 ---
 
-### Error handling
+# Error handling #
 
 PM hands out new requirements...
 We need ALL THE INFO for a `User` in that endpoint! :O
 
 ---
 
-### Error handling
+# Error handling #
 
 As new requirements are added
 
 ```scala
 val fetchUserInfo: Service[UserId, Option[(User, Address, PostalCode, Region, Country)]] =
-    (userId: UserId) =>
-      fetchUser(userId) flatMap {
-        case Some(user) => fetchAddress(user.addressId) flatMap {
-          case Some(address) => fetchPostalCode(address.postalCodeId) flatMap {
-            case Some(postalCode) => fetchRegion(postalCode.regionId) flatMap {
-              case Some(region) => fetchCountry(region.countryId) flatMap {
-                case Some(country) =>
-                  Future.successful(Some((user, address, postalCode, region, country)))
-                case None => Future.successful(None)
-              }
+  (userId: UserId) =>
+    fetchUser(userId) flatMap {
+      case Some(user) => fetchAddress(user.addressId) flatMap {
+        case Some(address) => fetchPostalCode(address.postalCodeId) flatMap {
+          case Some(postalCode) => fetchRegion(postalCode.regionId) flatMap {
+            case Some(region) => fetchCountry(region.countryId) flatMap {
+              case Some(country) =>
+                Future.successful(Some((user, address, postalCode, region, country)))
               case None => Future.successful(None)
             }
             case None => Future.successful(None)
@@ -316,11 +310,13 @@ val fetchUserInfo: Service[UserId, Option[(User, Address, PostalCode, Region, Co
         }
         case None => Future.successful(None)
       }
+      case None => Future.successful(None)
+    }
 ```
 
 ---
 
-### Error handling
+# Error handling #
 
 Code starts looking like
 
@@ -330,7 +326,7 @@ Code starts looking like
 
 ---
 
-### Error handling
+# Error handling #
 
 Code starts looking like
 
@@ -354,24 +350,24 @@ Else
 
 ---
 
-### Error handling
+# Error handling #
 
 At this point it's a game of choosing your own adventure:
 
 - It compiles and runs, I don't care! (╯°□°）╯︵ ┻━┻
 - We should ask for help, things are getting out of control!
-- Until someones says the word ☠ `Monad Transformers` ☠
+- Someones says the word ☠ `Monad Transformers` ☠
 
 ---
 
-### Error handling
+# Error handling #
 
 `OptionT`, `EitherT`, `Validated` some of the reasons folks get
 interested in FP in Scala.
 
 ---
 
-### Error handling
+# Error handling #
 
 Those that survive are happy again that their code looks nicer again
 
@@ -395,10 +391,10 @@ val nonExistingUser = fetchUserInfo(nonExistingUserId).await
 
 ---
 
-### Error handling
+# Error handling #
 
-As they digg more in FP land they learn about the importance of
-- Algebraic design through ADTs and sealed hierarchies!
+As they digg more in FP land they learn about
+the importance of ADTs and sealed hierarchies!
 
 ```scala
 sealed abstract class AppException(msg : String) extends Product with Serializable
@@ -410,47 +406,49 @@ final case class HostNotFoundException(msg : String) extends AppException(msg)
 
 ---
 
-### Error handling
+# Error handling #
 
-And since `Option`, `Try` and others are not expressive enough for some cases:
-
-- Known exceptional cases start surfacing and showing up in return types.
+Exceptional cases start showing up in return types.
 
 ```scala
 import cats.data.Xor
 import cats.syntax.xor._
 
 implicit class FutureOptionOps[A](fa : Future[Option[A]]) {
-	def toXor[L](e : L): Future[L Xor A] =
-		fa map (_.fold(e.left[A])(x => x.right[L]))
+  def toXor[L](e : L): Future[L Xor A] =
+    fa map (_.fold(e.left[A])(x => x.right[L]))
 }
 
-val fetchUser: Service[UserId, NotFound Xor User] =
-	(userId: UserId) =>
-		Future(Option(fetchRemoteUser(userId))).toXor(NotFound(s"User $userId not found"))
+val fetchUser: Service[UserId, NotFound Xor User] = {
+  (userId: UserId) =>
+    Future(Option(fetchRemoteUser(userId)))
+      .toXor(NotFound(s"User $userId not found"))
+}
 
-val fetchAddress: Service[AddressId, NotFound Xor Address] =
-	(addressId: AddressId) =>
-		Future(Option(fetchRemoteAddress(addressId))).toXor(NotFound(s"Address $addressId not found"))
+val fetchAddress: Service[AddressId, NotFound Xor Address] = {
+  (addressId: AddressId) =>
+    Future(Option(fetchRemoteAddress(addressId)))
+      .toXor(NotFound(s"Address $addressId not found"))
+}
 ```
 
 ---
 
-### Error handling
+# Error handling #
 
 They grow beyond `OptionT` and start using other transformers.
 
 ```scala
 import cats.data.XorT
 
-val fetchUserInfo: Service[UserId, NotFound Xor (User, Address)] =
-    (userId: UserId) => {
-      val resT = for {
-        user <- XorT(fetchUser(userId))
-        address <- XorT(fetchAddress(user.addressId))
-      } yield (user, address)
-      resT.value
-    }
+val fetchUserInfo: Service[UserId, NotFound Xor (User, Address)] = {
+  (userId: UserId) =>
+    val resT = for {
+      user <- XorT(fetchUser(userId))
+      address <- XorT(fetchAddress(user.addressId))
+    } yield (user, address)
+    resT.value
+}
 
 val existingUser = fetchUserInfo(existingUserId).await
 val nonExistingUser = fetchUserInfo(nonExistingUserId).await
@@ -458,7 +456,7 @@ val nonExistingUser = fetchUserInfo(nonExistingUserId).await
 
 ---
 
-### Non determinism
+# Non determinism #
 
 ```scala
 import org.scalacheck._
@@ -475,7 +473,7 @@ def latencyGen: Gen[(Int, Int)] = for {
 
 ---
 
-### Non determinism
+# Non determinism #
 
 ```scala
 val test = forAll(latencyGen) { latency =>
@@ -490,7 +488,7 @@ val test = forAll(latencyGen) { latency =>
 
 ---
 
-### Non determinism
+# Non determinism #
 
 ```scala
 val test = forAll(latencyGen) { latency =>
@@ -507,24 +505,23 @@ val test = forAll(latencyGen) { latency =>
 
 ---
 
-### What others things are folks reporting?
+# What others things are folks reporting? #
 
 - Wrong order of Effects (When someone recommends moving )
-- Random deadlocks
-  (Custom ExecutionContexts)
+- Random deadlocks (Custom ExecutionContexts)
 - General confusion as to why most combinators require an implicit EC
   when one was already provided to `Future#apply`.
 - A lot of reusable code becomes non reusable because it's inside a `Future`
 
 ---
 
-### Code reuse?
+# Code reuse? #
 
 Can we make our code available to other runtimes beside `Future`.
 
 ---
 
-### Abstracting over the return type
+# Abstracting over the return type #
 
 Our services are coupled to `Future`
 
@@ -534,7 +531,7 @@ type Service[A, B] = A => Future[B]
 
 ---
 
-### Abstracting over the return type
+# Abstracting over the return type #
 
 But they don't have to
 
@@ -544,17 +541,7 @@ type Service[F[_], A, B] = A => F[B]
 
 ---
 
-### Abstracting over the return type
-
-But they don't have to
-
-```scala
-type Service[F[_], A, B] = A => F[B]
-```
-
----
-
-### Abstracting over the return type
+# Abstracting over the return type #
 
 We just need a way to lift a `thunk: => A` to an `F[_]`
 
@@ -568,7 +555,7 @@ import simulacrum.typeclass
 
 ---
 
-### Abstracting over the return type
+# Abstracting over the return type #
 
 We'll add one instance per type we are wanting to support
 
@@ -576,40 +563,41 @@ We'll add one instance per type we are wanting to support
 import scala.concurrent.ExecutionContext
 
 implicit def futureCapture(implicit ec : ExecutionContext) : Capture[Future] =
-    new Capture[Future] {
-        override def capture[A](a: => A): Future[A] = Future(a)(ec)
-    }
+  new Capture[Future] {
+    override def capture[A](a: => A): Future[A] = Future(a)(ec)
+  }
 ```
 
 ---
 
-### Abstracting over the return type
+# Abstracting over the return type #
 
 ```scala
 import monix.eval.Task
 import monix.cats._
+
 implicit val taskCapture : Capture[Task] =
-    new Capture[Task] {
-        override def capture[A](a: => A): Task[A] = Task.evalOnce(a)
-    }
+  new Capture[Task] {
+    override def capture[A](a: => A): Task[A] = Task.evalOnce(a)
+  }
 ```
 
 ---
 
-### Abstracting over the return type
+# Abstracting over the return type #
 
 ```scala
 import scala.util.Try
 
 implicit val tryCapture : Capture[Try] =
-    new Capture[Try] {
-        override def capture[A](a: => A): Try[A] = Try(a)
-    }
+  new Capture[Try] {
+    override def capture[A](a: => A): Try[A] = Try(a)
+  }
 ```
 
 ---
 
-### Abstracting over the return type
+# Abstracting over the return type #
 
 Our services now are parametrized to any `F[_]` for which a `Capture`
 instance is found.
@@ -620,49 +608,65 @@ import cats.implicits._
 
 implicit class FGOps[F[_]: Functor, G[_]: Foldable, A](fa : F[G[A]]) {
   def toXor[L](e : L): F[L Xor A] =
-	Functor[F].map(fa) { g =>
-		Foldable[G].foldLeft[A, L Xor A](g, e.left[A])((_, b) => b.right[L])
-	}
-}
-
-class Services[F[_] : Capture : Functor] {
-
-	val fetchUser: Service[F, UserId, NotFound Xor User] = (userId: UserId) =>
-		Capture[F]
-			.capture(Option(fetchRemoteUser(userId)))
-			.toXor(NotFound(s"User $userId not found"))
-
-	val fetchAddress: Service[F, AddressId, NotFound Xor Address] = (addressId: AddressId) =>
-		Capture[F]
-			.capture(Option(fetchRemoteAddress(addressId)))
-			.toXor(NotFound(s"Address $addressId not found"))
-
-}
-
-object Services {
-    def apply[F[_] : Capture: Functor] : Services[F] = new Services[F]
-
-    implicit def instance[F[_]: Capture: Functor]: Services[F] = apply[F]
+    Functor[F].map(fa) { g =>
+      Foldable[G].foldLeft[A, L Xor A](g, e.left[A])((_, b) => b.right[L])
+    }
 }
 ```
 
 ---
 
-### Abstracting over the return type
+# Abstracting over the return type #
+
+Our services now are parametrized to any `F[_]` for which a `Capture`
+instance is found.
+
+```scala
+class Services[F[_] : Capture : Functor] {
+
+  val fetchUser: Service[F, UserId, NotFound Xor User] = {
+    (userId: UserId) =>
+    Capture[F]
+      .capture(Option(fetchRemoteUser(userId)))
+      .toXor(NotFound(s"User $userId not found"))
+  }
+
+    val fetchAddress: Service[F, AddressId, NotFound Xor Address] = {
+      (addressId: AddressId) =>
+      Capture[F]
+        .capture(Option(fetchRemoteAddress(addressId)))
+        .toXor(NotFound(s"Address $addressId not found"))
+    }
+}
+
+object Services {
+    import cats._
+    def apply[F[_] : Capture: Monad: RecursiveTailRecM] : Services[F] = new Services[F]
+    implicit def instance[F[_]: Capture: Monad: RecursiveTailRecM]: Services[F] = apply[F]
+}
+```
+
+---
+
+# Abstracting over the return type #
 
 Code becomes reusable regardless of the target runtime
 
 ```scala
 val futureS = Services[Future].fetchUser(existingUserId)
-
 val taskS = Services[Task].fetchUser(existingUserId)
-
 val tryS = Services[Try].fetchUser(existingUserId)
 ```
 
 ---
 
-### Abstracting over implementations
+# Abstracting over the return type #
+
+Other alternatives available (Rapture Modes and Result)
+
+---
+
+# Abstracting over implementations #
 
 Now that we can run our code to any `F[_]` that can
 capture a lazy computation we may want to abstract over
@@ -670,23 +674,26 @@ implementations too.
 
 ---
 
-### Abstracting over implementations
+# Abstracting over implementations #
 
 Free Monads / Applicatives is what has worked best for us.
+
 - Free of interpretation allowing multiple runtimes.
+- Composable via Coproduct.
+- Lots of boilerplate that can be improved.
 - Supports abstracting over return types.
 - Getting momentum with multiple posts and libs supporting the pattern.
- (List those here)
+ (Freek, cats, ...)
 
 ---
 
-### Abstracting over implementations
+# Abstracting over implementations #
 
 Let's refactor our services to run on `Free`?
 
 ---
 
-### Abstracting over implementations
+# Abstracting over implementations #
 
 Define your Algebra
 
@@ -698,7 +705,7 @@ final case class FetchAddress(addressId: AddressId) extends ServiceOp[NotFound X
 
 ---
 
-### Abstracting over implementations
+# Abstracting over implementations #
 
 Lift your Algebra to Free
 
@@ -708,45 +715,51 @@ import cats.free.Free
 type ServiceIO[A] = Free[ServiceOp, A]
 
 object ServiceOps {
+
     def fetchUser(userId: UserId): ServiceIO[NotFound Xor User] =
-        Free.liftF(FetchUser(userId))
+      Free.liftF(FetchUser(userId))
+
     def fetchAddress(addressId: AddressId): ServiceIO[NotFound Xor Address] =
-        Free.liftF(FetchAddress(addressId))
+      Free.liftF(FetchAddress(addressId))
+
 }
 ```
 
 ---
 
-### Abstracting over implementations
+# Abstracting over implementations #
 
 Write 1 or many interpreters that may be swapped at runtime
 
 ```scala
+import cats._
+import cats.implicits._
+import Services._
+
 def interpreter[M[_] : Capture : Monad : RecursiveTailRecM]
-    (implicit impl: Services[M]): ServiceOp ~> M =
-        new (ServiceOp ~> M) {
-            override def apply[A](fa: ServiceOp[A]): M[A] = {
-            val result = fa match {
-                case FetchUser(userId) => impl.fetchUser(userId)
-                case FetchAddress(addressId) => impl.fetchAddress(addressId)
-            }
-            result.asInstanceOf[M[A]]
-        }
+  (implicit impl: Services[M]): ServiceOp ~> M = new (ServiceOp ~> M) {
+    override def apply[A](fa: ServiceOp[A]): M[A] = {
+      val result = fa match {
+        case FetchUser(userId) => impl.fetchUser(userId)
+        case FetchAddress(addressId) => impl.fetchAddress(addressId)
+      }
+      result.asInstanceOf[M[A]]
+    }
+  }
 ```
 
 ---
 
-### Abstracting over implementations
+# Abstracting over implementations #
 
 Write programs using the smart constructors and combining them at will
 
 ```scala
-import ServiceOps._
 
 def fetchUserInfo(userId: UserId): ServiceIO[NotFound Xor (User, Address)] = {
     val resT = for {
-        user <- XorT(fetchUser(userId))
-        address <- XorT(fetchAddress(user.addressId))
+        user <- XorT(ServiceOps.fetchUser(userId))
+        address <- XorT(ServiceOps.fetchAddress(user.addressId))
     } yield (user, address)
     resT.value
 }
@@ -754,7 +767,7 @@ def fetchUserInfo(userId: UserId): ServiceIO[NotFound Xor (User, Address)] = {
 
 ---
 
-### Abstracting over implementations
+# Abstracting over implementations #
 
 Run your programs to any target implementation and runtime
 
@@ -768,7 +781,7 @@ val futureResult = fetchUserInfo(existingUserId).foldMap(interpreter[Future])
 
 ---
 
-### Patterns
+# Patterns #
 
 Recommendations for others that have worked for us:
 
@@ -779,10 +792,20 @@ Recommendations for others that have worked for us:
 
 ---
 
-### Conclusion
+# Conclusion #
 
-- Most Scala newcomers are not exposed to Typed FP when they start.
-- There a repeating patterns .
-- Scala is not a Functional Programming Language.
+- Most Scala newcomers are NOT exposed to Typed FP when they start.
+- There are repeating patterns of failure and frustration among newcommers.
+- Scala is not a Functional Programming Language but we can make it.
+- Expose newcomers to Scala to typed FP for a brither `Future`
+
+---
+
+# Wishes for the Future #
+
+- Make Scala more FP friendly.
+
+@raulraja @47deg
+https://speakerdeck.com/raulraja/run-wild-run-free
 
 ---

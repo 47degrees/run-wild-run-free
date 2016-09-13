@@ -2,6 +2,8 @@
 *.log
 
 # sbt specific
+.ensime
+.ensime/
 .cache
 .idea
 .idea/
