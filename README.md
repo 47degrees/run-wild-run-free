@@ -26,5 +26,4 @@ You are an FP Scala developer looking for code examples and inspiration around F
 
 1. Interactive : Clone this repo and run `sbt console`
 2. [PDF](presentation.pdf) Download
-3. [MD](presentation.md)
 4. [SpeakerDeck](https://speakerdeck.com/raulraja/run-wild-run-free)
